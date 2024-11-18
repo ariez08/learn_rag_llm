@@ -1,9 +1,24 @@
+import argparse, shutil, os
 from langchain.document_loaders.pdf import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema.document import Document
 from langchain_community.embeddings.bedrock import BedrockEmbeddings
 from langchain_community.embeddings.ollama import OllamaEmbeddings
 from langchain.vectorstores.chroma import Chroma
+
+def main():
+    # Check if the database should be cleared (using the --clear flag).
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--reset", action="store_true", help="Reset the database.")
+    args = parser.parse_args()
+    if args.reset:
+        print("✨ Clearing Database")
+        clear_database()
+
+    # Create (or update) the data store.
+    documents = load_documents()
+    chunks = split_documents(documents)
+    add_to_chroma(chunks)
 
 def load_documents():
     document_loader = PyPDFDirectoryLoader("data")
@@ -40,7 +55,7 @@ def add_to_chroma(chunks: list[Document]):
     existing_items = db.get(include=[])
     existing_ids = set(existing_items["ids"])
     print(f"Number of existing documents in DB: {len(existing_ids)}")
-    
+
     new_chunks = []
     for chunk in chunks_with_ids:
         if chunk.metadata["id"] not in existing_ids:
@@ -77,3 +92,11 @@ def calculate_chunk_ids(chunks):
         chunk.metadata["id"] = chunk_id
 
     return chunks
+
+def clear_database():
+    if os.path.exists("chroma"):
+        shutil.rmtree("chroma")
+
+
+if __name__ == "__main__":
+    main()
