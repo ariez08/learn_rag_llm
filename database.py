@@ -3,7 +3,7 @@ from langchain.document_loaders.pdf import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.schema.document import Document
 from langchain.vectorstores.chroma import Chroma
-from get_embedding import get_embedding_function_aws
+from get_embedding import get_embedding_function
 
 def main():
     # Check if the database should be cleared (using the --clear flag).
@@ -35,7 +35,7 @@ def split_documents(documents: list[Document]):
 def add_to_chroma(chunks: list[Document]):
     db = Chroma(
         persist_directory="chroma",
-        embedding_function=get_embedding_function_aws()
+        embedding_function=get_embedding_function()
     )
 
     chunks_with_ids = calculate_chunk_ids(chunks)
@@ -53,7 +53,6 @@ def add_to_chroma(chunks: list[Document]):
         print(f"Adding new documents: {len(new_chunks)}")
         new_chunk_ids = [chunk.metadata["id"] for chunk in new_chunks]
         db.add_documents(new_chunks, ids=new_chunk_ids)
-        db.persist()
     else:
         print("No new documents to add")
 
